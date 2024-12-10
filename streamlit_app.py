@@ -3,7 +3,7 @@ from PIL import Image
 import io
 
 # Judul aplikasi
-st.title("Image Rotation App")
+st.title("Rotation image by 4 brother")
 
 # Instruksi
 st.write("Unggah gambar, pilih sudut rotasi, dan unduh hasilnya dalam format PNG, JPG, atau PDF.")
