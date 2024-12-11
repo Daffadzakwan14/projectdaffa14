@@ -1,73 +1,81 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageEnhance
+import numpy as np
 import io
 
-# Judul aplikasi
-st.title("Rotation image by 4 brother")
+# Judul Aplikasi
+st.title("Advanced Image Editor")
 
 # Instruksi
-st.write("Unggah gambar, pilih sudut rotasi, dan unduh hasilnya dalam format PNG, JPG, atau PDF.")
+st.write("Unggah gambar dan gunakan fitur pengeditan berikut: Scaling, Shear, Brightness Adjustment, dan Rotation.")
 
 # Mengunggah gambar
 uploaded_file = st.file_uploader("Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
 
-# Slider untuk menentukan sudut rotasi
-rotation_angle = st.slider(
-    "Rotation Angle (in degrees)", 
-    min_value=0, 
-    max_value=360, 
-    value=0, 
-    step=1, 
-    help="Pilih sudut untuk memutar gambar (0-360 derajat)."
-)
-
 if uploaded_file is not None:
     # Membaca file gambar
     img = Image.open(uploaded_file)
-    
+
     # Menampilkan gambar asli
     st.subheader("Original Image")
     st.image(img, caption="Original Image", use_column_width=True)
-    
-    # Melakukan rotasi pada gambar
-    rotated_img = img.rotate(rotation_angle, expand=True)
-    
-    # Menampilkan gambar hasil rotasi
-    st.subheader("Rotated Image")
-    st.image(rotated_img, caption=f"Rotated Image ({rotation_angle}°)", use_column_width=True)
-    
-    # Opsi format unduhan
-    st.subheader("Download Rotated Image")
-    format_option = st.radio(
-        "Choose the file format to download:",
-        options=["PNG", "JPG", "PDF"]
+
+    # Scaling
+    st.subheader("Scaling")
+    scaling_factor = st.slider("Scaling Factor", 0.1, 5.0, 1.0, 0.1)
+    scaled_width = int(img.width * scaling_factor)
+    scaled_height = int(img.height * scaling_factor)
+    img_scaled = img.resize((scaled_width, scaled_height), Image.ANTIALIAS)
+
+    st.image(img_scaled, caption=f"Scaled Image (Factor: {scaling_factor})", use_column_width=True)
+
+    # Shear
+    st.subheader("Shear")
+    shear_factor = st.slider("Shear Factor", -1.0, 1.0, 0.0, 0.1)
+    img_sheared = img_scaled.transform(
+        img_scaled.size,
+        Image.AFFINE,
+        (1, shear_factor, 0, shear_factor, 1, 0),
+        resample=Image.ANTIALIAS,
     )
-    
-    # Konversi ke format yang dipilih dan unduh
+    st.image(img_sheared, caption=f"Sheared Image (Factor: {shear_factor})", use_column_width=True)
+
+    # Brightness Adjustment
+    st.subheader("Brightness Adjustment")
+    brightness_factor = st.slider("Brightness Factor", 0.1, 3.0, 1.0, 0.1)
+    enhancer = ImageEnhance.Brightness(img_sheared)
+    img_brightness = enhancer.enhance(brightness_factor)
+    st.image(img_brightness, caption=f"Brightness Adjusted (Factor: {brightness_factor})", use_column_width=True)
+
+    # Rotation
+    st.subheader("Rotation")
+    rotation_angle = st.slider("Rotation Angle (in degrees)", 0, 360, 0, 1)
+    img_rotated = img_brightness.rotate(rotation_angle, expand=True)
+    st.image(img_rotated, caption=f"Rotated Image ({rotation_angle}°)", use_column_width=True)
+
+    # Download Section
+    st.subheader("Download Edited Image")
+    format_option = st.radio("Choose the file format:", ["PNG", "JPG", "PDF"])
+
+    # Menyimpan file hasil edit ke buffer
+    buffer = io.BytesIO()
     if format_option == "PNG":
-        buffer = io.BytesIO()
-        rotated_img.save(buffer, format="PNG")
-        st.download_button(
-            label="Download as PNG",
-            data=buffer.getvalue(),
-            file_name="rotated_image.png",
-            mime="image/png"
-        )
+        img_rotated.save(buffer, format="PNG")
+        mime_type = "image/png"
+        file_name = "edited_image.png"
     elif format_option == "JPG":
-        buffer = io.BytesIO()
-        rotated_img.convert("RGB").save(buffer, format="JPEG")
-        st.download_button(
-            label="Download as JPG",
-            data=buffer.getvalue(),
-            file_name="rotated_image.jpg",
-            mime="image/jpeg"
-        )
+        img_rotated.convert("RGB").save(buffer, format="JPEG")
+        mime_type = "image/jpeg"
+        file_name = "edited_image.jpg"
     elif format_option == "PDF":
-        buffer = io.BytesIO()
-        rotated_img.convert("RGB").save(buffer, format="PDF")
-        st.download_button(
-            label="Download as PDF",
-            data=buffer.getvalue(),
-            file_name="rotated_image.pdf",
-            mime="application/pdf"
-        )
+        img_rotated.convert("RGB").save(buffer, format="PDF")
+        mime_type = "application/pdf"
+        file_name = "edited_image.pdf"
+
+    # Menampilkan tombol unduh
+    st.download_button(
+        label=f"Download as {format_option}",
+        data=buffer.getvalue(),
+        file_name=file_name,
+        mime=mime_type,
+    )
