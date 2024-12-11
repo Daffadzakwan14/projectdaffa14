@@ -4,7 +4,7 @@ import numpy as np
 import io
 
 # Judul Aplikasi
-st.title("Project linear about image processing using Streamlit and Github by 4 brother")
+st.title("Project linear about image processing using Streamlit and Github by Group 1")
 
 # Instruksi
 st.write("Unggah gambar dan gunakan fitur pengeditan berikut: Scaling, Shear, Brightness Adjustment, dan Rotation.")
